@@ -3,130 +3,163 @@ using System.Collections.Generic;
 using UnityEngine;
 
 [RequireComponent(typeof(Rigidbody2D))]
-
+[RequireComponent(typeof(Animator))]
 public class PlayerController : MonoBehaviour
 {
-    [Header("Attributes")]
+	[Header("Attributes")]
 
-	[Tooltip("Controls the movement speed of the player. Higher values make the player move faster.")]
-    [SerializeField] private float moveSpeed;
+	// Player's normal movement speed.
+	[Tooltip("Controls the movement speed of the player.")]
+	[SerializeField] private float moveSpeed;
 
-    [Tooltip("Speed multiplier applied when the character is running.")]
+	// Speed multiplier for when the player is running.
+	[Tooltip("Speed multiplier for running.")]
 	[SerializeField] private float runSpeed;
 
-    [Tooltip("Determines the current speed of the character, dynamically adjusted based on movement state.")]
-    private float activeSpeed;
+	// The speed currently being used, based on player state (walking or running).
+	private float activeSpeed;
 
-	[Tooltip("Controls the physics behavior of a 2D object, enabling realistic motion, collisions, and forces.")]
-    private Rigidbody2D rb;
+	// Reference to the Rigidbody2D component for physics interactions.
+	[Tooltip("Rigidbody2D component for 2D physics.")]
+	private Rigidbody2D rb;
 
-    [Tooltip("Determines the upward force applied when the character jumps.")]
-    [SerializeField] private float jumpForce;
+	// Reference to the Animator component to handle character animations.
+	[Tooltip("Animator component to handle character animations.")]
+	private Animator anim;
 
-    [Tooltip("Indicates whether the player has the ability to perform a second jump while airborne.")]
-    private bool canDoubleJump;
+	// Force applied upward when the player jumps.
+	[Tooltip("Upward force when jumping.")]
+	[SerializeField] private float jumpForce;
 
-    [Header("State")]
+	[Header("State")]
 
-    [Tooltip("Indicates whether the player is currently in contact with the ground.")]
-    private bool isGrounded;
+	// Is the player currently standing on the ground?
+	[Tooltip("Is the player touching the ground?")]
+	private bool isGrounded;
 
-	[Tooltip("Reference point from which to check if the player is in contact with the ground.")]
+	// Is the player currently able to perform a double jump?
+	[Tooltip("Is the player able to double jump?")]
+	private bool canDoubleJump;
+
+	// Position from which a check is made to see if the player is on the ground.
+	[Tooltip("Check point for ground contact.")]
 	[SerializeField] private Transform groundCheckPoint;
 
-	[Tooltip("Radius around the groundCheckPoint within which the game checks for ground.")]
+	// The distance around groundCheckPoint where the check for ground is made.
+	[Tooltip("Radius for checking ground contact.")]
 	[SerializeField] private float groundCheckRadius;
 
-	[Tooltip("Radius around the leftPlatformsCheckPoint or rightPlatformCheckpoints within which the game checks for platforms.")]
+	// The distance around platform check points to determine if player is near a platform.
+	[Tooltip("Radius for checking platform contact.")]
 	[SerializeField] private float platformCheckRadius;
 
-	[Tooltip("Reference point from which to check if the player is in contact with a left platform.")]
+	// Position from which a check is made to see if the player is near a platform on the left.
+	[Tooltip("Check point for left-side platform contact.")]
 	[SerializeField] private Transform leftPlatformsCheckPoint;
 
-	[Tooltip("Reference point from which to check if the player is in contact with a right platform.")]
+	// Position from which a check is made to see if the player is near a platform on the right.
+	[Tooltip("Check point for right-side platform contact.")]
 	[SerializeField] private Transform rightPlatformsCheckPoint;
 
-	[Tooltip("Layer(s) considered as 'ground'. Used to detect if the player is on the ground.")]
+	// Specifies which layers are considered 'ground'.
+	[Tooltip("Layers considered as ground.")]
 	[SerializeField] private LayerMask whatIsGround;
 
-	[Tooltip("Layer(s) considered as 'plaatform'. Used to detect if the player is on the side of some platform to double jump.")]
+	// Specifies which layers are considered 'platform'.
+	[Tooltip("Layers considered as platform.")]
 	[SerializeField] private LayerMask whatIsPlatform;
 
-	// Start is called before the first frame update
+	// Initialization of component references.
 	void Start()
-    {
-        rb = GetComponent<Rigidbody2D>();
-    }
+	{
+		InitRequiredComponents();
+	}
 
-    // Update is called once per frame
-    void FixedUpdate()
-    {
+	// Regularly update player states and handle inputs.
+	void Update()
+	{
 		CheckGrounded();
-
+		CheckIsOnPlatform();
 		Move();
-		
 		HandleJumping();
+		HandleAnimations();
+		HandleFlippingSide();
 	}
 
-    void Update()
-    {
-		HandleInputs();
+	// Fetch the necessary components from the game object.
+	void InitRequiredComponents()
+	{
+		rb = GetComponent<Rigidbody2D>();
+		anim = GetComponent<Animator>();
 	}
 
-    void Move()
-    {
-		// Sets the active speed based on whether the Left Shift key is pressed: 'runSpeed' if pressed, otherwise 'moveSpeed'.
+	// Handle player's horizontal movement.
+	void Move()
+	{
+		// Set movement speed based on whether player is walking or running.
 		activeSpeed = Input.GetKey(KeyCode.LeftShift) ? runSpeed : moveSpeed;
 
-		// Set the horizontal velocity of the object based on player input, while preserving the current vertical velocity.
+		// Apply movement.
 		rb.velocity = new Vector2(Input.GetAxisRaw("Horizontal") * activeSpeed, rb.velocity.y);
-    }
+	}
 
-    void HandleJumping()
-    {
-        if (Input.GetButtonDown("Jump"))
-        {
-            if (isGrounded == true)
-            {
-                Jump();
-                canDoubleJump = true;
-            }
-            else if (canDoubleJump)
-            {
-				if (CanDoubleJumpOffPlatform())
-				{
-					Jump();
-					canDoubleJump = false;
-				}
-				else
-				{
-					canDoubleJump = false;
-				}
-			}
-			else
+	// Determine jump behavior based on player's current state.
+	void HandleJumping()
+	{
+		if (Input.GetButtonDown("Jump"))
+		{
+			if (isGrounded)
 			{
+				Jump();
+				canDoubleJump = true;
+				anim.SetBool("isDoubleJumping", false);
+			}
+			else if (canDoubleJump && ASidePlatform())
+			{
+				Jump();
+				anim.SetBool("isDoubleJumping", true);
 				canDoubleJump = false;
 			}
 		}
-    }
+	}
 
+	// Check if player is grounded.
 	void CheckGrounded()
 	{
 		isGrounded = Physics2D.OverlapCircle(groundCheckPoint.position, groundCheckRadius, whatIsGround);
 	}
 
-	void HandleInputs()
+	// Check if player is on or near a platform.
+	void CheckIsOnPlatform()
 	{
-		activeSpeed = Input.GetKey(KeyCode.LeftShift) ? runSpeed : moveSpeed;
+		isGrounded = isGrounded || Physics2D.OverlapCircle(groundCheckPoint.position, groundCheckRadius, whatIsPlatform);
 	}
 
+	// Flip player sprite based on movement direction.
+	void HandleFlippingSide()
+	{
+		if (rb.velocity.x > 0)
+			transform.localScale = Vector3.one;
+		else if (rb.velocity.x < 0)
+			transform.localScale = new Vector3(-1f, 1f, 1f);
+	}
+
+	// Adjust animations based on player's state and movement.
+	void HandleAnimations()
+	{
+		anim.SetFloat("speed", Mathf.Abs(rb.velocity.x));
+		anim.SetBool("isGrounded", isGrounded);
+		anim.SetFloat("ySpeed", rb.velocity.y);
+	}
+
+	// Apply vertical force to make the player jump.
 	void Jump()
-    {
-		// Set the vertical velocity of the object to the jump force, while preserving the current horizontal velocity.
+	{
 		rb.velocity = new Vector2(rb.velocity.x, jumpForce);
 	}
 
-	bool CanDoubleJumpOffPlatform()
+	// Check if player is near a platform, either on the left or the right.
+	bool ASidePlatform()
 	{
 		return Physics2D.OverlapCircle(leftPlatformsCheckPoint.position, platformCheckRadius, whatIsPlatform) ||
 			   Physics2D.OverlapCircle(rightPlatformsCheckPoint.position, platformCheckRadius, whatIsPlatform);
