@@ -3630,12 +3630,12 @@ MonoBehaviour:
   jumpForce: 22
   groundCheckPoint: {fileID: 402228539}
   groundCheckRadius: 0.2
-  platformCheckRadius: 0.2
-  leftPlatformsCheckPoint: {fileID: 1711106000}
-  rightPlatformsCheckPoint: {fileID: 113104207}
   whatIsGround:
     serializedVersion: 2
     m_Bits: 64
+  leftPlatformsCheckPoint: {fileID: 1711106000}
+  rightPlatformsCheckPoint: {fileID: 113104207}
+  platformCheckRadius: 0.2
   whatIsPlatform:
     serializedVersion: 2
     m_Bits: 256

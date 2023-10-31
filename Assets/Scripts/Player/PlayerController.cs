@@ -1,167 +1,151 @@
-using System.Collections;
-using System.Collections.Generic;
 using UnityEngine;
 
+/// <summary>
+/// Controls the player character's movement, including walking, running, jumping, and interaction with the environment.
+/// </summary>
 [RequireComponent(typeof(Rigidbody2D))]
 [RequireComponent(typeof(Animator))]
 public class PlayerController : MonoBehaviour
 {
-	[Header("Attributes")]
-
-	// Player's normal movement speed.
+	[Header("Movement Attributes")]
 	[Tooltip("Controls the movement speed of the player.")]
 	[SerializeField] private float moveSpeed;
-
-	// Speed multiplier for when the player is running.
 	[Tooltip("Speed multiplier for running.")]
 	[SerializeField] private float runSpeed;
 
-	// The speed currently being used, based on player state (walking or running).
-	private float activeSpeed;
-
-	// Reference to the Rigidbody2D component for physics interactions.
-	[Tooltip("Rigidbody2D component for 2D physics.")]
-	private Rigidbody2D rb;
-
-	// Reference to the Animator component to handle character animations.
-	[Tooltip("Animator component to handle character animations.")]
-	private Animator anim;
-
-	// Force applied upward when the player jumps.
+	[Header("Jumping Attributes")]
 	[Tooltip("Upward force when jumping.")]
 	[SerializeField] private float jumpForce;
 
-	[Header("State")]
-
-	// Is the player currently standing on the ground?
-	[Tooltip("Is the player touching the ground?")]
-	private bool isGrounded;
-
-	// Is the player currently able to perform a double jump?
-	[Tooltip("Is the player able to double jump?")]
-	private bool canDoubleJump;
-
-	// Position from which a check is made to see if the player is on the ground.
+	[Header("Ground Detection")]
 	[Tooltip("Check point for ground contact.")]
 	[SerializeField] private Transform groundCheckPoint;
-
-	// The distance around groundCheckPoint where the check for ground is made.
 	[Tooltip("Radius for checking ground contact.")]
 	[SerializeField] private float groundCheckRadius;
-
-	// The distance around platform check points to determine if player is near a platform.
-	[Tooltip("Radius for checking platform contact.")]
-	[SerializeField] private float platformCheckRadius;
-
-	// Position from which a check is made to see if the player is near a platform on the left.
-	[Tooltip("Check point for left-side platform contact.")]
-	[SerializeField] private Transform leftPlatformsCheckPoint;
-
-	// Position from which a check is made to see if the player is near a platform on the right.
-	[Tooltip("Check point for right-side platform contact.")]
-	[SerializeField] private Transform rightPlatformsCheckPoint;
-
-	// Specifies which layers are considered 'ground'.
 	[Tooltip("Layers considered as ground.")]
 	[SerializeField] private LayerMask whatIsGround;
 
-	// Specifies which layers are considered 'platform'.
+	[Header("Platform Detection")]
+	[Tooltip("Check point for left side platform contact.")]
+	[SerializeField] private Transform leftPlatformsCheckPoint;
+	[Tooltip("Check point for rightt side platform contact.")]
+	[SerializeField] private Transform rightPlatformsCheckPoint;
+	[Tooltip("Radius for checking platform contact.")]
+	[SerializeField] private float platformCheckRadius;
 	[Tooltip("Layers considered as platform.")]
 	[SerializeField] private LayerMask whatIsPlatform;
 
-	// Initialization of component references.
-	void Start()
+	private float activeSpeed;
+	private bool isGrounded;
+	private bool canDoubleJump;
+
+	private Rigidbody2D rb;
+	private Animator anim;
+
+	/// <summary>
+	/// Awake is called when the script instance is being loaded.
+	/// </summary>
+	private void Awake()
 	{
-		InitRequiredComponents();
+		// Initialize the Rigidbody2D and Animator components.
+		rb = GetComponent<Rigidbody2D>();
+		anim = GetComponent<Animator>();
 	}
 
-	// Regularly update player states and handle inputs.
-	void Update()
+	/// <summary>
+	/// Update is called once per frame and handles input and checks for environment interactions.
+	/// </summary>
+	private void Update()
 	{
 		CheckGrounded();
-		CheckIsOnPlatform();
 		Move();
 		HandleJumping();
 		HandleAnimations();
 		HandleFlippingSide();
 	}
 
-	// Fetch the necessary components from the game object.
-	void InitRequiredComponents()
+	/// <summary>
+	/// Moves the player character based on user input and active speed.
+	/// </summary>
+	private void Move()
 	{
-		rb = GetComponent<Rigidbody2D>();
-		anim = GetComponent<Animator>();
-	}
-
-	// Handle player's horizontal movement.
-	void Move()
-	{
-		// Set movement speed based on whether player is walking or running.
+		// Determine the active speed based on whether the player is walking or running.
 		activeSpeed = Input.GetKey(KeyCode.LeftShift) ? runSpeed : moveSpeed;
 
-		// Apply movement.
+		// Apply the determined active speed to the player's horizontal velocity.
 		rb.velocity = new Vector2(Input.GetAxisRaw("Horizontal") * activeSpeed, rb.velocity.y);
 	}
 
-	// Determine jump behavior based on player's current state.
-	void HandleJumping()
+	/// <summary>
+	/// Handles the player's jumping behavior when the jump button is pressed.
+	/// </summary>
+	private void HandleJumping()
 	{
+		// Check for jump input and if the player is either grounded or can double jump.
 		if (Input.GetButtonDown("Jump"))
 		{
-			if (isGrounded)
+			if (isGrounded || (canDoubleJump && IsBesidePlatform()))
 			{
 				Jump();
-				canDoubleJump = true;
-				anim.SetBool("isDoubleJumping", false);
-			}
-			else if (canDoubleJump && ASidePlatform())
-			{
-				Jump();
-				anim.SetBool("isDoubleJumping", true);
-				canDoubleJump = false;
 			}
 		}
 	}
 
-	// Check if player is grounded.
-	void CheckGrounded()
+	/// <summary>
+	/// Checks if the player is grounded by performing a Physics2D overlap circle check at the groundCheckPoint.
+	/// </summary>
+	private void CheckGrounded()
 	{
-		isGrounded = Physics2D.OverlapCircle(groundCheckPoint.position, groundCheckRadius, whatIsGround);
+		// Update the isGrounded state based on whether the groundCheckPoint overlaps with the ground or platform layers.
+		isGrounded = Physics2D.OverlapCircle(groundCheckPoint.position, groundCheckRadius, whatIsGround) || 
+			Physics2D.OverlapCircle(groundCheckPoint.position, groundCheckRadius, whatIsPlatform);
 	}
 
-	// Check if player is on or near a platform.
-	void CheckIsOnPlatform()
+	/// <summary>
+	/// Executes the jump by applying an upward force to the Rigidbody2D component and manages the double jump state.
+	/// </summary>
+	private void Jump()
 	{
-		isGrounded = isGrounded || Physics2D.OverlapCircle(groundCheckPoint.position, groundCheckRadius, whatIsPlatform);
+		// Apply the jump force to the player's vertical velocity.
+		rb.velocity = new Vector2(rb.velocity.x, jumpForce);
+		// If jumping from the ground, enable double jump. Otherwise, disable it.
+		canDoubleJump = isGrounded;
+		// Inform the Animator component about the jump.
+		anim.SetBool("isDoubleJumping", !isGrounded);
 	}
 
-	// Flip player sprite based on movement direction.
-	void HandleFlippingSide()
+	/// <summary>
+	/// Determines if the player is beside a platform allowing for a double jump.
+	/// </summary>
+	/// <returns>True if the player is next to a platform within the check radius.</returns>
+	private bool IsBesidePlatform()
 	{
+		// Check both left and right side platform points for overlap with the platform layer.
+		return Physics2D.OverlapCircle(leftPlatformsCheckPoint.position, platformCheckRadius, whatIsPlatform) ||
+			   Physics2D.OverlapCircle(rightPlatformsCheckPoint.position, platformCheckRadius, whatIsPlatform);
+	}
+
+	/// <summary>
+	/// Flips the player's sprite to face the direction of movement.
+	/// </summary>
+	private void HandleFlippingSide()
+	{
+		// Flip the character's localScale.x to face the correct direction of movement.
 		if (rb.velocity.x > 0)
 			transform.localScale = Vector3.one;
 		else if (rb.velocity.x < 0)
 			transform.localScale = new Vector3(-1f, 1f, 1f);
 	}
 
-	// Adjust animations based on player's state and movement.
-	void HandleAnimations()
+	/// <summary>
+	/// Handles the player's animations based on movement and ground states.
+	/// </summary>
+	private void HandleAnimations()
 	{
+		// Update Animator parameters with the current speed and grounded state.
 		anim.SetFloat("speed", Mathf.Abs(rb.velocity.x));
 		anim.SetBool("isGrounded", isGrounded);
 		anim.SetFloat("ySpeed", rb.velocity.y);
 	}
-
-	// Apply vertical force to make the player jump.
-	void Jump()
-	{
-		rb.velocity = new Vector2(rb.velocity.x, jumpForce);
-	}
-
-	// Check if player is near a platform, either on the left or the right.
-	bool ASidePlatform()
-	{
-		return Physics2D.OverlapCircle(leftPlatformsCheckPoint.position, platformCheckRadius, whatIsPlatform) ||
-			   Physics2D.OverlapCircle(rightPlatformsCheckPoint.position, platformCheckRadius, whatIsPlatform);
-	}
 }
+	

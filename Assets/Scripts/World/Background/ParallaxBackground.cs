@@ -1,28 +1,43 @@
-using System.Collections;
-using System.Collections.Generic;
 using UnityEngine;
 
+/// <summary>
+/// Manages parallax effect for background elements relative to the camera's position.
+/// </summary>
 public class ParallaxBackground : MonoBehaviour
 {
-    private Transform theCam;
+	// Cached reference to the main camera's transform.
+	private Transform cameraTransform;
 
-    [SerializeField] private Transform theSky;
+	[Tooltip("Reference to the sky element of the background.")]
+	[SerializeField] private Transform theSky;
 
-    [SerializeField] private Transform theTreeline;
+	[Tooltip("Reference to the treeline element of the background.")]
+	[SerializeField] private Transform theTreeline;
 
-    [SerializeField][Range(0f, 1f)] private float parallaxSpeed;
+	[Tooltip("The speed at which the treeline moves relative to the camera, creating a parallax effect.")]
+	[SerializeField][Range(0f, 1f)] private float parallaxSpeed;
 
-    // Start is called before the first frame update
-    void Start()
-    {
-        theCam = Camera.main.transform;
-    }
+	/// <summary>
+	/// Initialization of the script, caching the main camera's transform.
+	/// </summary>
+	private void Start()
+	{
+		cameraTransform = Camera.main.transform;
+	}
 
-    // Update is called once per frame
-    void LateUpdate()
-    {
-        theSky.position = new Vector3(theCam.position.x, theCam.position.y, theSky.position.z);
+	/// <summary>
+	/// Updates the position of parallax elements each frame after all other updates have occurred.
+	/// </summary>
+	private void LateUpdate()
+	{
+		// The sky position matches the camera position on the x and y axes but maintains its original z position.
+		theSky.position = new Vector3(cameraTransform.position.x, cameraTransform.position.y, theSky.position.z);
 
-        theTreeline.position = new Vector3(theCam.position.x * parallaxSpeed, theCam.position.y * parallaxSpeed, theTreeline.position.z);
-    }
+		// The treeline position is a fraction of the camera's position, determined by the parallax speed.
+		// This creates the illusion of depth due to the different rates of movement between the foreground and background.
+		theTreeline.position = new Vector3(cameraTransform.position.x * parallaxSpeed,
+											cameraTransform.position.y * parallaxSpeed,
+											theTreeline.position.z);
+	}
 }
+
