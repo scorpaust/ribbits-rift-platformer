@@ -7,6 +7,9 @@ using UnityEngine;
 [RequireComponent(typeof(Animator))]
 public class PlayerController : MonoBehaviour
 {
+	// Singleton instance to allow easy global access to the PlayerHealthController.
+	public static PlayerController Instance { get; private set; }
+
 	[Header("Movement Attributes")]
 	[Tooltip("Controls the movement speed of the player.")]
 	[SerializeField] private float moveSpeed;
@@ -42,10 +45,42 @@ public class PlayerController : MonoBehaviour
 	private Rigidbody2D rb;
 	private Animator anim;
 
+	private bool isActive = true;
+
+	public bool IsActive
+	{
+		get
+		{
+			return isActive;
+		}
+
+		set
+		{
+			isActive = value; 	
+		}
+	}
+
+	/// <summary>
+	/// Awake is called when the script instance is being loaded.
+	/// Initializes the singleton instance.
+	/// </summary>
+	private void Awake()
+	{
+		if (Instance != null && Instance != this)
+		{
+			// If a duplicate exists, destroy it to enforce the singleton pattern.
+			Destroy(gameObject);
+		}
+		else
+		{
+			Instance = this;
+		}
+	}
+
 	/// <summary>
 	/// Awake is called when the script instance is being loaded.
 	/// </summary>
-	private void Awake()
+	private void Start()
 	{
 		// Initialize the Rigidbody2D and Animator components.
 		rb = GetComponent<Rigidbody2D>();
@@ -57,6 +92,8 @@ public class PlayerController : MonoBehaviour
 	/// </summary>
 	private void Update()
 	{
+		if (!IsActive) return;
+
 		CheckGrounded();
 		Move();
 		HandleJumping();
