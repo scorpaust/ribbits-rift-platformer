@@ -1,13 +1,13 @@
 using UnityEngine;
 
 /// <summary>
-/// Controls the player character's movement, including walking, running, jumping, and interaction with the environment.
+/// Controls the player character's movement, including walking, running, jumping, and handling interactions
+/// with the environment, such as knockback from hazards.
 /// </summary>
 [RequireComponent(typeof(Rigidbody2D))]
 [RequireComponent(typeof(Animator))]
 public class PlayerController : MonoBehaviour
 {
-	// Singleton instance to allow easy global access to the PlayerHealthController.
 	public static PlayerController Instance { get; private set; }
 
 	[Header("Movement Attributes")]
@@ -31,49 +31,49 @@ public class PlayerController : MonoBehaviour
 	[Header("Platform Detection")]
 	[Tooltip("Check point for left side platform contact.")]
 	[SerializeField] private Transform leftPlatformsCheckPoint;
-	[Tooltip("Check point for rightt side platform contact.")]
+	[Tooltip("Check point for right side platform contact.")]
 	[SerializeField] private Transform rightPlatformsCheckPoint;
 	[Tooltip("Radius for checking platform contact.")]
 	[SerializeField] private float platformCheckRadius;
 	[Tooltip("Layers considered as platform.")]
 	[SerializeField] private LayerMask whatIsPlatform;
 
+	[Header("Knockback Settings")]
+	[Tooltip("Duration of knockback effect.")]
+	[SerializeField] private float knockbackLength = 1f;
+	[Tooltip("Speed of knockback effect.")]
+	[SerializeField] private float knockbackSpeed;
+
 	private float activeSpeed;
 	private bool isGrounded;
 	private bool canDoubleJump;
+	private float knockbackCounter;
+	private bool isActive = true;
 
 	private Rigidbody2D rb;
 	private Animator anim;
 
-	private bool isActive = true;
-
 	public bool IsActive
 	{
-		get
-		{
-			return isActive;
-		}
-
-		set
-		{
-			isActive = value; 	
-		}
+		get => isActive;
+		set => isActive = value;
 	}
 
+
 	/// <summary>
-	/// Awake is called when the script instance is being loaded.
-	/// Initializes the singleton instance.
+	/// Initializes the singleton instance, ensuring only one instance exists.
 	/// </summary>
 	private void Awake()
 	{
 		if (Instance != null && Instance != this)
 		{
-			// If a duplicate exists, destroy it to enforce the singleton pattern.
 			Destroy(gameObject);
 		}
 		else
 		{
 			Instance = this;
+			rb = GetComponent<Rigidbody2D>();
+			anim = GetComponent<Animator>();
 		}
 	}
 
@@ -88,17 +88,21 @@ public class PlayerController : MonoBehaviour
 	}
 
 	/// <summary>
-	/// Update is called once per frame and handles input and checks for environment interactions.
+	/// Handles player input for movement and jumping, and applies knockback when necessary.
 	/// </summary>
 	private void Update()
 	{
-		if (!IsActive) return;
+		if (!IsActive || knockbackCounter > 0)
+		{
+			HandleKnockback();
+			return;
+		}
 
 		CheckGrounded();
 		Move();
 		HandleJumping();
-		HandleAnimations();
 		HandleFlippingSide();
+		HandleAnimations();
 	}
 
 	/// <summary>
@@ -149,6 +153,7 @@ public class PlayerController : MonoBehaviour
 		canDoubleJump = isGrounded;
 		// Inform the Animator component about the jump.
 		anim.SetBool("isDoubleJumping", !isGrounded);
+		// anim.SetTrigger("doDoubleJump")
 	}
 
 	/// <summary>
@@ -183,6 +188,28 @@ public class PlayerController : MonoBehaviour
 		anim.SetFloat("speed", Mathf.Abs(rb.velocity.x));
 		anim.SetBool("isGrounded", isGrounded);
 		anim.SetFloat("ySpeed", rb.velocity.y);
+	}
+
+	/// <summary>
+	/// Applies knockback to the player and triggers knockback animation.
+	/// </summary>
+	public void KnockBack()
+	{
+		knockbackCounter = knockbackLength;
+		rb.velocity = new Vector2(knockbackSpeed * -transform.localScale.x, rb.velocity.y);
+		anim.SetTrigger("isKnockingBack");
+	}
+
+	/// <summary>
+	/// Handles the knockback effect over time and resets player velocity after the effect.
+	/// </summary>
+	private void HandleKnockback()
+	{
+		knockbackCounter -= Time.deltaTime;
+		if (knockbackCounter <= 0)
+		{
+			rb.velocity = new Vector2(0f, rb.velocity.y);
+		}
 	}
 }
 	

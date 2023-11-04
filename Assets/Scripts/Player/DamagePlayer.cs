@@ -67,6 +67,9 @@ public class DamagePlayer : MonoBehaviour
 			Color originalColor = spriteRenderer.color;
 			// The color to blink to (red by default).
 			Color blinkColor = Color.red;
+
+			blinkColor.a = 0.8f;
+			
 			// Calculate the time when the blinking will end.
 			float blinkEndTime = Time.time + blinkDuration;
 

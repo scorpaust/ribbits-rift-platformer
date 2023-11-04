@@ -3,101 +3,126 @@ using UnityEngine;
 using UnityEngine.SceneManagement;
 
 /// <summary>
-/// Manages the player's health, providing methods to deal damage and heal.
+/// Manages the player's health and related effects such as invincibility frames and death handling.
 /// </summary>
 public class PlayerHealthController : MonoBehaviour
 {
-	// Singleton instance to allow easy global access to the PlayerHealthController.
 	public static PlayerHealthController Instance { get; private set; }
 
+	[Header("Health Configuration")]
 	[Tooltip("The current health of the player.")]
-	[SerializeField]
-	private int currentHealth;
+	[SerializeField] private int currentHealth;
+	[Tooltip("The maximum health of the player.")]
+	[SerializeField] private int maxHealth;
+
+	[Header("Death and Invincibility")]
+	[Tooltip("The force applied when the player dies to create a 'jump' effect.")]
+	[SerializeField] private float deathJumpForce = 10f;
+	[Tooltip("The duration for which the player is invincible after taking damage.")]
+	[SerializeField] private float invincibilityLength = 0.5f;
+
+	private float invincibilityCounter;
+	private Rigidbody2D rb;
+	private PlayerController thePlayer;
+
 	public int CurrentHealth
 	{
 		get => currentHealth;
-		private set
+		private set => currentHealth = Mathf.Clamp(value, 0, maxHealth);
+	}
+
+	public int MaxHealth => maxHealth;
+
+	private void Awake()
+	{
+		ManageSingletonInstance();
+	}
+
+	private void Start()
+	{
+		InitializeHealth();
+	}
+
+	private void Update()
+	{
+		CheckInvincibility();
+	}
+
+	/// <summary>
+	/// Damages the player if they are not currently invincible, triggering knockback and potential death.
+	/// </summary>
+	public void DamagePlayer()
+	{
+		if (invincibilityCounter <= 0)
 		{
-			// Ensure the health never exceeds the maximum or falls below zero.
-			currentHealth = Mathf.Clamp(value, 0, maxHealth);
+			ProcessPlayerDamage();
 		}
 	}
 
-	[Tooltip("The maximum health of the player.")]
-	[SerializeField]
-	private int maxHealth;
-
-	// Parameters for the death jump
-	[SerializeField] private float deathJumpForce = 10f;
-	private Rigidbody2D rb;
-
-	/// <summary>
-	/// Awake is called when the script instance is being loaded.
-	/// Initializes the singleton instance.
-	/// </summary>
-	private void Awake()
+	private void ManageSingletonInstance()
 	{
 		if (Instance != null && Instance != this)
 		{
-			// If a duplicate exists, destroy it to enforce the singleton pattern.
 			Destroy(gameObject);
 		}
 		else
 		{
 			Instance = this;
+			rb = GetComponent<Rigidbody2D>();
+			thePlayer = GetComponent<PlayerController>();
 		}
 	}
 
-	/// <summary>
-	/// Start is called before the first frame update.
-	/// Initializes the current health to the maximum value at the start of the game.
-	/// </summary>
-	private void Start()
+	private void InitializeHealth()
 	{
 		CurrentHealth = maxHealth;
-
-		rb = GetComponent<Rigidbody2D>();
 	}
 
-	/// <summary>
-	/// Damages the player by reducing their current health by one.
-	/// </summary>
-	public void DamagePlayer()
+	private void CheckInvincibility()
 	{
-		CurrentHealth--;
-		// Additional logic for when the player takes damage can be added here.
-		// For example, triggering a damage animation or checking for player death.
-
-		if (CurrentHealth <= 0f)
+		if (invincibilityCounter > 0)
 		{
-			CurrentHealth = 0;
+			invincibilityCounter -= Time.deltaTime;
+		}
+	}
 
+	private void ProcessPlayerDamage()
+	{
+		invincibilityCounter = invincibilityLength;
+		CurrentHealth--;
+		thePlayer.KnockBack();
+
+		if (CurrentHealth <= 0)
+		{
 			StartCoroutine(HandleDeath());
+		}
+		else
+		{
+			UIController.Instance.UpdateHealthDisplay(CurrentHealth, MaxHealth);
 		}
 	}
 
 	/// <summary>
-	/// Handles the player's death, triggering the death animation and any additional logic required.
+	/// Handles the player's death animation and subsequent level reset.
 	/// </summary>
 	private IEnumerator HandleDeath()
 	{
-		CapsuleCollider2D collider = PlayerController.Instance.GetComponent<CapsuleCollider2D>();
-		// Apply an upward force to make the player 'jump' into the air
+		DisablePlayerControlAndCollider();
 		rb.velocity = new Vector2(rb.velocity.x, deathJumpForce);
-
-		yield return new WaitForSeconds(.5f);
-
-		// Disable further movement and collision handling here if needed
-        // Disable the player's ability to control the character
-		PlayerController.Instance.IsActive = false;
-
-		// Disable player's collider to make it fall
-		if (collider != null)
-			collider.enabled = false;
-		
+		yield return new WaitForSeconds(0.5f);
 		yield return new WaitForSeconds(2f);
+		RestartCurrentScene();
+	}
 
-		// Restart current scene
+	private void DisablePlayerControlAndCollider()
+	{
+		thePlayer.IsActive = false;
+		CapsuleCollider2D collider = thePlayer.GetComponent<CapsuleCollider2D>();
+		if (collider != null) collider.enabled = false;
+	}
+
+	private void RestartCurrentScene()
+	{
 		SceneManager.LoadScene(SceneManager.GetActiveScene().name);
 	}
 }
