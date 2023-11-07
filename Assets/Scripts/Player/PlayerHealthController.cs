@@ -125,4 +125,16 @@ public class PlayerHealthController : MonoBehaviour
 	{
 		SceneManager.LoadScene(SceneManager.GetActiveScene().name);
 	}
+
+	public void AddHealth(int amountToAdd)
+	{
+		CurrentHealth += amountToAdd;
+
+		if (CurrentHealth > MaxHealth)
+		{
+			CurrentHealth = MaxHealth;
+		}
+
+		UIController.Instance.UpdateHealthDisplay(CurrentHealth, MaxHealth);
+	}
 }

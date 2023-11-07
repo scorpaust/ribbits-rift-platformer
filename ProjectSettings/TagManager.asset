@@ -44,6 +44,9 @@ TagManager:
   - name: Default
     uniqueID: 0
     locked: 0
+  - name: Pickup
+    uniqueID: 1864192891
+    locked: 0
   - name: Player
     uniqueID: 3117677907
     locked: 0
