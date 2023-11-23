@@ -85,6 +85,8 @@ public class PlayerController : MonoBehaviour
 		// Initialize the Rigidbody2D and Animator components.
 		rb = GetComponent<Rigidbody2D>();
 		anim = GetComponent<Animator>();
+
+		activeSpeed = moveSpeed;
 	}
 
 	/// <summary>

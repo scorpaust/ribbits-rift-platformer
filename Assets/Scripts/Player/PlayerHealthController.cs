@@ -111,7 +111,12 @@ public class PlayerHealthController : MonoBehaviour
 		rb.velocity = new Vector2(rb.velocity.x, deathJumpForce);
 		yield return new WaitForSeconds(0.5f);
 		yield return new WaitForSeconds(2f);
-		RestartCurrentScene();
+		//RestartCurrentScene();
+		EnablePlayerControlAndCollider();
+		rb.velocity = new Vector2(rb.velocity.x, deathJumpForce);
+		LifeController.instance.Respawn();
+		InitializeHealth();
+		UIController.Instance.UpdateHealthDisplay(CurrentHealth, MaxHealth);
 	}
 
 	private void DisablePlayerControlAndCollider()
@@ -119,6 +124,13 @@ public class PlayerHealthController : MonoBehaviour
 		thePlayer.IsActive = false;
 		CapsuleCollider2D collider = thePlayer.GetComponent<CapsuleCollider2D>();
 		if (collider != null) collider.enabled = false;
+	}
+
+	private void EnablePlayerControlAndCollider()
+	{
+		thePlayer.IsActive = true;
+		CapsuleCollider2D collider = thePlayer.GetComponent<CapsuleCollider2D>();
+		if (collider != null) collider.enabled = true;
 	}
 
 	private void RestartCurrentScene()

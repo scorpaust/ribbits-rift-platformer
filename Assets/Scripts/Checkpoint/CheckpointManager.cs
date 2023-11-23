@@ -12,6 +12,8 @@ public class CheckpointManager : MonoBehaviour
 	[Tooltip("Currently active checkpoint.")]
 	private Checkpoint activeCheckpoint;
 
+	public Vector3 respawnPosition;
+
 	/// <summary>
 	/// Start is called before the first frame update.
 	/// Initializes the checkpoints and assigns this manager to each.
@@ -19,6 +21,8 @@ public class CheckpointManager : MonoBehaviour
 	private void Start()
 	{
 		InitializeCheckpoints();
+
+		respawnPosition = FindFirstObjectByType<PlayerController>().transform.position;
 	}
 
 	/// <summary>
@@ -53,5 +57,6 @@ public class CheckpointManager : MonoBehaviour
 	{
 		DeactivateAllCheckpoints();
 		activeCheckpoint = newActiveCheckpoint;
+		respawnPosition = activeCheckpoint.transform.position;
 	}
 }
