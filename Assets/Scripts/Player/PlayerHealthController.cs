@@ -1,12 +1,12 @@
 using System.Collections;
 using UnityEngine;
-using UnityEngine.SceneManagement;
 
 /// <summary>
-/// Manages the player's health and related effects such as invincibility frames and death handling.
+/// Manages the player's health, handling damage, invincibility frames, death, and health restoration.
 /// </summary>
 public class PlayerHealthController : MonoBehaviour
 {
+	// Singleton Instance
 	public static PlayerHealthController Instance { get; private set; }
 
 	[Header("Health Configuration")]
@@ -48,9 +48,6 @@ public class PlayerHealthController : MonoBehaviour
 		CheckInvincibility();
 	}
 
-	/// <summary>
-	/// Damages the player if they are not currently invincible, triggering knockback and potential death.
-	/// </summary>
 	public void DamagePlayer()
 	{
 		if (invincibilityCounter <= 0)
@@ -76,6 +73,7 @@ public class PlayerHealthController : MonoBehaviour
 	private void InitializeHealth()
 	{
 		CurrentHealth = maxHealth;
+		UIController.Instance.UpdateHealthDisplay(CurrentHealth, MaxHealth);
 	}
 
 	private void CheckInvincibility()
@@ -91,32 +89,23 @@ public class PlayerHealthController : MonoBehaviour
 		invincibilityCounter = invincibilityLength;
 		CurrentHealth--;
 		thePlayer.KnockBack();
+		UpdateHealthUI();
 
 		if (CurrentHealth <= 0)
 		{
 			StartCoroutine(HandleDeath());
 		}
-		else
-		{
-			UIController.Instance.UpdateHealthDisplay(CurrentHealth, MaxHealth);
-		}
 	}
 
-	/// <summary>
-	/// Handles the player's death animation and subsequent level reset.
-	/// </summary>
 	private IEnumerator HandleDeath()
 	{
 		DisablePlayerControlAndCollider();
 		rb.velocity = new Vector2(rb.velocity.x, deathJumpForce);
+
 		yield return new WaitForSeconds(0.5f);
-		yield return new WaitForSeconds(2f);
-		//RestartCurrentScene();
-		EnablePlayerControlAndCollider();
-		rb.velocity = new Vector2(rb.velocity.x, deathJumpForce);
+
 		LifeController.instance.Respawn();
 		InitializeHealth();
-		UIController.Instance.UpdateHealthDisplay(CurrentHealth, MaxHealth);
 	}
 
 	private void DisablePlayerControlAndCollider()
@@ -126,27 +115,14 @@ public class PlayerHealthController : MonoBehaviour
 		if (collider != null) collider.enabled = false;
 	}
 
-	private void EnablePlayerControlAndCollider()
+	private void UpdateHealthUI()
 	{
-		thePlayer.IsActive = true;
-		CapsuleCollider2D collider = thePlayer.GetComponent<CapsuleCollider2D>();
-		if (collider != null) collider.enabled = true;
-	}
-
-	private void RestartCurrentScene()
-	{
-		SceneManager.LoadScene(SceneManager.GetActiveScene().name);
+		UIController.Instance.UpdateHealthDisplay(CurrentHealth, MaxHealth);
 	}
 
 	public void AddHealth(int amountToAdd)
 	{
 		CurrentHealth += amountToAdd;
-
-		if (CurrentHealth > MaxHealth)
-		{
-			CurrentHealth = MaxHealth;
-		}
-
-		UIController.Instance.UpdateHealthDisplay(CurrentHealth, MaxHealth);
+		UpdateHealthUI();
 	}
 }

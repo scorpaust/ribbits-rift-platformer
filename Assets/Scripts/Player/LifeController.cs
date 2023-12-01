@@ -1,32 +1,117 @@
 using System.Collections;
-using System.Collections.Generic;
 using UnityEngine;
 
+/// <summary>
+/// Manages the player's lives, handling respawning and game over scenarios.
+/// </summary>
 public class LifeController : MonoBehaviour
 {
-    public static LifeController instance;
+	// Singleton Instance
+	public static LifeController instance { get; private set; }
 
-    private PlayerController thePlayer;
+	[Header("Player and Checkpoint")]
+	private PlayerController thePlayer;
 
+	[Header("Respawn Settings")]
+	[Tooltip("Delay before respawning the player.")]
+	[SerializeField] private float respawnDelay = 5f;
+
+	[Header("Player Lives")]
+	[Tooltip("Current number of lives the player has.")]
+	[SerializeField] private int currentLives = 3;
+
+	[Header("Effects")]
+	[Tooltip("Effect to instantiate when the player respawns.")]
+	[SerializeField] private GameObject respawnEffect;
+	[Tooltip("Effect to instantiate when the player dies.")]
+	[SerializeField] private GameObject deathEffect;
+
+	/// <summary>
+	/// Initializes the singleton instance of the LifeController.
+	/// </summary>
 	private void Awake()
 	{
-        instance = this;
+		if (instance != null && instance != this)
+		{
+			Destroy(gameObject);
+		}
+		else
+		{
+			instance = this;
+		}
 	}
 
-	// Start is called before the first frame update
-	void Start()
-    {
-        thePlayer = FindFirstObjectByType<PlayerController>();
-    }
+	/// <summary>
+	/// Start is called before the first frame update.
+	/// Initializes player references.
+	/// </summary>
+	private void Start()
+	{
+		thePlayer = FindObjectOfType<PlayerController>();
+	}
 
-    // Update is called once per frame
-    void Update()
-    {
-        
-    }
+	/// <summary>
+	/// Handles the player's respawn process or triggers game over if out of lives.
+	/// </summary>
+	public void Respawn()
+	{
+		currentLives--;
+		Instantiate(deathEffect, thePlayer.transform.position, thePlayer.transform.rotation);
+		UpdateDisplay();
 
-    public void Respawn()
-    {
-        thePlayer.transform.position = FindFirstObjectByType<CheckpointManager>().respawnPosition;
-    }
+		if (currentLives > 0)
+		{
+			StartCoroutine(RespawnCo());
+		}
+		else
+		{
+			currentLives = 0;
+			StartCoroutine(GameOverCo());
+		}
+	}
+
+	/// <summary>
+	/// Coroutine to manage the respawn delay and process.
+	/// </summary>
+	private IEnumerator RespawnCo()
+	{
+		yield return new WaitForSeconds(2f);
+
+		// Reset player's velocity and position.
+		var playerRb = thePlayer.GetComponent<Rigidbody2D>();
+		playerRb.velocity = new Vector2(playerRb.velocity.x, 20f);
+
+		yield return new WaitForSeconds(respawnDelay);
+
+		CheckpointManager checkpointManager = FindObjectOfType<CheckpointManager>();
+		thePlayer.transform.position = checkpointManager.respawnPosition;
+
+		Instantiate(respawnEffect, thePlayer.transform.position, thePlayer.transform.rotation);
+	}
+
+	/// <summary>
+	/// Coroutine to handle game over delay and process.
+	/// </summary>
+	private IEnumerator GameOverCo()
+	{
+		yield return new WaitForSeconds(respawnDelay);
+		UIController.Instance?.ShowGameOver();
+	}
+
+	/// <summary>
+	/// Adds a life to the player's current lives and updates the display.
+	/// </summary>
+	public void AddLife()
+	{
+		currentLives++;
+		UpdateDisplay();
+	}
+
+	/// <summary>
+	/// Updates the lives display on the UI.
+	/// </summary>
+	private void UpdateDisplay()
+	{
+		UIController.Instance?.UpdateLivesDisplay(currentLives);
+	}
 }

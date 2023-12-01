@@ -1,11 +1,14 @@
+using TMPro;
 using UnityEngine;
+using UnityEngine.SceneManagement;
 using UnityEngine.UI;
 
 /// <summary>
-/// Manages the UI elements related to player health, updating heart icons to reflect the current and maximum health.
+/// Manages the UI elements in the game, including health display, lives count, game over screen, and collectables count.
 /// </summary>
 public class UIController : MonoBehaviour
 {
+	// Singleton declaration
 	public static UIController Instance { get; private set; }
 
 	[Header("UI Components")]
@@ -18,15 +21,22 @@ public class UIController : MonoBehaviour
 	[Tooltip("Sprite to represent an empty heart.")]
 	[SerializeField] private Sprite heartEmpty;
 
+	[Header("Text Displays")]
+	[Tooltip("Text display for the number of lives.")]
+	[SerializeField] private TMP_Text livesText;
+	[Tooltip("Game over screen GameObject.")]
+	[SerializeField] private GameObject gameOverScreen;
+	[Tooltip("Text display for the number of collectables.")]
+	[SerializeField] private TMP_Text collectablesText;
+
 	/// <summary>
-	/// Awake is called when the script instance is being loaded.
-	/// Initializes the singleton instance.
+	/// Initializes the singleton instance of the UIController.
 	/// </summary>
 	private void Awake()
 	{
 		if (Instance != null && Instance != this)
 		{
-			Destroy(gameObject); // Prevent duplicate instances of the singleton.
+			Destroy(gameObject);
 		}
 		else
 		{
@@ -35,7 +45,7 @@ public class UIController : MonoBehaviour
 	}
 
 	/// <summary>
-	/// Updates the heart icons to reflect the player's current health.
+	/// Updates the heart icons on the UI to reflect the player's current and maximum health.
 	/// </summary>
 	/// <param name="health">The player's current health.</param>
 	/// <param name="maxHealth">The player's maximum health.</param>
@@ -43,17 +53,43 @@ public class UIController : MonoBehaviour
 	{
 		for (int i = 0; i < heartIcons.Length; i++)
 		{
-			// Ensure all heart icons are active to start with.
-			heartIcons[i].enabled = true;
-
-			// Determine the sprite to show for each heart based on current health.
-			heartIcons[i].sprite = health > i ? heartFull : heartEmpty;
-
-			// Disable heart icons that exceed the player's maximum health.
-			if (maxHealth <= i)
-			{
-				heartIcons[i].enabled = false;
-			}
+			heartIcons[i].enabled = i < maxHealth;
+			heartIcons[i].sprite = i < health ? heartFull : heartEmpty;
 		}
 	}
+
+	/// <summary>
+	/// Updates the displayed number of lives on the UI.
+	/// </summary>
+	/// <param name="currentLives">The current number of lives.</param>
+	public void UpdateLivesDisplay(int currentLives)
+	{
+		livesText.text = "x " + currentLives;
+	}
+
+	/// <summary>
+	/// Shows the game over screen.
+	/// </summary>
+	public void ShowGameOver()
+	{
+		gameOverScreen.SetActive(true);
+	}
+
+	/// <summary>
+	/// Restarts the current game scene.
+	/// </summary>
+	public void RestartGame()
+	{
+		SceneManager.LoadScene(SceneManager.GetActiveScene().name);
+	}
+
+	/// <summary>
+	/// Updates the displayed count of collectables on the UI.
+	/// </summary>
+	/// <param name="amount">The number of collectables collected.</param>
+	public void UpdateCollectables(int amount)
+	{
+		collectablesText.text = amount.ToString();
+	}
 }
+
