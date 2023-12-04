@@ -2168,9 +2168,11 @@ GameObject:
   m_Component:
   - component: {fileID: 1290023038}
   - component: {fileID: 1290023037}
+  - component: {fileID: 1290023042}
   - component: {fileID: 1290023039}
   - component: {fileID: 1290023040}
-  m_Layer: 0
+  - component: {fileID: 1290023041}
+  m_Layer: 9
   m_Name: Enemy Rock
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -2209,8 +2211,8 @@ CapsuleCollider2D:
   m_IsTrigger: 0
   m_UsedByEffector: 0
   m_UsedByComposite: 0
-  m_Offset: {x: 0.04810905, y: -0.07697393}
-  m_Size: {x: 2.3470645, y: 2.077657}
+  m_Offset: {x: 0.048109014, y: -0.37977487}
+  m_Size: {x: 2.3470647, y: 1.4720675}
   m_Direction: 1
 --- !u!4 &1290023038
 Transform:
@@ -2267,6 +2269,64 @@ MonoBehaviour:
   - {fileID: 610596109}
   moveSpeed: 3
   timeAtPoints: 2
+--- !u!114 &1290023041
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1290023036}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ceb23c94d97ab7746bb97199f118de1e, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  waitToDestroy: 0.2
+--- !u!61 &1290023042
+BoxCollider2D:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1290023036}
+  m_Enabled: 1
+  m_Density: 1
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
+  m_ForceSendLayers:
+    serializedVersion: 2
+    m_Bits: 4294967295
+  m_ForceReceiveLayers:
+    serializedVersion: 2
+    m_Bits: 4294967295
+  m_ContactCaptureLayers:
+    serializedVersion: 2
+    m_Bits: 4294967295
+  m_CallbackLayers:
+    serializedVersion: 2
+    m_Bits: 4294967295
+  m_IsTrigger: 1
+  m_UsedByEffector: 0
+  m_UsedByComposite: 0
+  m_Offset: {x: 0.010093272, y: 0.6308291}
+  m_SpriteTilingProperty:
+    border: {x: 0, y: 0, z: 0, w: 0}
+    pivot: {x: 0, y: 0}
+    oldSize: {x: 0, y: 0}
+    newSize: {x: 0, y: 0}
+    adaptiveTilingThreshold: 0
+    drawMode: 0
+    adaptiveTiling: 0
+  m_AutoTiling: 0
+  serializedVersion: 2
+  m_Size: {x: 1.6661555, y: 0.54580307}
+  m_EdgeRadius: 0
 --- !u!1 &1307839531
 GameObject:
   m_ObjectHideFlags: 0
@@ -6703,7 +6763,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 1, y: 1}
   m_AnchorMax: {x: 1, y: 1}
-  m_AnchoredPosition: {x: -100, y: -100}
+  m_AnchoredPosition: {x: -100, y: 0}
   m_SizeDelta: {x: 75, y: 75}
   m_Pivot: {x: 0, y: 0}
 --- !u!114 &1422613684
@@ -7073,7 +7133,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 1, y: 1}
   m_AnchorMax: {x: 1, y: 1}
-  m_AnchoredPosition: {x: -108, y: -65}
+  m_AnchoredPosition: {x: -108, y: 0}
   m_SizeDelta: {x: 75, y: 50}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &1548169223

@@ -124,12 +124,19 @@ public class PlayerController : MonoBehaviour
 	/// </summary>
 	private void HandleJumping()
 	{
+		// If jumping from the ground, enable double jump. Otherwise, disable it.
+		canDoubleJump = !isGrounded && IsBesidePlatform();
+
 		// Check for jump input and if the player is either grounded or can double jump.
 		if (Input.GetButtonDown("Jump"))
 		{
-			if (isGrounded || (canDoubleJump && IsBesidePlatform()))
+			if (isGrounded && !canDoubleJump)
 			{
-				Jump();
+				Jump(false);
+			}
+			else if (canDoubleJump) 
+			{
+				Jump(true);
 			}
 		}
 	}
@@ -147,14 +154,13 @@ public class PlayerController : MonoBehaviour
 	/// <summary>
 	/// Executes the jump by applying an upward force to the Rigidbody2D component and manages the double jump state.
 	/// </summary>
-	private void Jump()
+	public void Jump(bool doubleJump)
 	{
 		// Apply the jump force to the player's vertical velocity.
 		rb.velocity = new Vector2(rb.velocity.x, jumpForce);
-		// If jumping from the ground, enable double jump. Otherwise, disable it.
-		canDoubleJump = isGrounded;
+		
 		// Inform the Animator component about the jump.
-		anim.SetBool("isDoubleJumping", !isGrounded);
+		anim.SetBool("isDoubleJumping", doubleJump);
 		// anim.SetTrigger("doDoubleJump")
 	}
 

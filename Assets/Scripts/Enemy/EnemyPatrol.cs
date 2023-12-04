@@ -17,12 +17,15 @@ public class EnemyPatrol : MonoBehaviour
 	private int currentPoint;
 	private Animator anim;
 
+	private EnemyController ec;
+
 	/// <summary>
 	/// Start is called before the first frame update.
 	/// Initializes patrol points and sets up the animator.
 	/// </summary>
 	private void Start()
 	{
+		ec = GetComponent<EnemyController>();
 		InitializePatrolPoints();
 		waitCounter = timeAtPoints;
 		anim = GetComponent<Animator>();
@@ -35,6 +38,12 @@ public class EnemyPatrol : MonoBehaviour
 	/// </summary>
 	private void Update()
 	{
+		// If the enemy is defeated disable its movement
+		if (ec.IsDefeated)
+		{
+			return;
+		}
+		
 		MoveTowardsNextPoint();
 
 		if (IsAtPatrolPoint())
