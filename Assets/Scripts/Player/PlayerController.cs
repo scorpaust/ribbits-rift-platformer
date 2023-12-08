@@ -94,6 +94,8 @@ public class PlayerController : MonoBehaviour
 	/// </summary>
 	private void Update()
 	{
+		if (Time.timeScale <= 0f) return;
+
 		if (!IsActive || knockbackCounter > 0)
 		{
 			HandleKnockback();
@@ -219,5 +221,7 @@ public class PlayerController : MonoBehaviour
 			rb.velocity = new Vector2(0f, rb.velocity.y);
 		}
 	}
+
+	
 }
 	
