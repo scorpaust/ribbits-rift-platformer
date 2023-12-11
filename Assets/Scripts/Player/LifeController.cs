@@ -87,6 +87,8 @@ public class LifeController : MonoBehaviour
 		thePlayer.transform.position = checkpointManager.respawnPosition;
 
 		Instantiate(respawnEffect, thePlayer.transform.position, thePlayer.transform.rotation);
+
+		AudioManager.Instance.PlaySFX(11, false);
 	}
 
 	/// <summary>
@@ -105,6 +107,7 @@ public class LifeController : MonoBehaviour
 	{
 		currentLives++;
 		UpdateDisplay();
+		AudioManager.Instance.PlaySFX(8, false);
 	}
 
 	/// <summary>

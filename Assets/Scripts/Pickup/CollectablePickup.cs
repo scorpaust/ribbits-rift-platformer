@@ -36,6 +36,7 @@ public class CollectablePickup : MonoBehaviour
 			CollectablesManager.instance.GetCollectable(amount);
 			InstantiatePickupEffect();
 			Destroy(gameObject);
+			AudioManager.Instance.PlaySFX(9, true);
 		}
 	}
 

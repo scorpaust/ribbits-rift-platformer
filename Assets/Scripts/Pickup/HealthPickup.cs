@@ -53,5 +53,8 @@ public class HealthPickup : MonoBehaviour
 
 		// Destroy the health pickup game object.
 		Destroy(gameObject);
+
+		// Play SFX
+		AudioManager.Instance.PlaySFX(10, false);
 	}
 }

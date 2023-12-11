@@ -57,6 +57,7 @@ public class Checkpoint : MonoBehaviour
 		ChkpMan.SetActiveCheckpoint(this);
 		anim.SetBool("flagActive", true);
 		isActive = true;
+		AudioManager.Instance.PlaySFX(3, false);
 	}
 
 	/// <summary>

@@ -94,20 +94,22 @@ public class PlayerController : MonoBehaviour
 	/// </summary>
 	private void Update()
 	{
-		if (Time.timeScale <= 0f) return;
-
-		if (!IsActive || knockbackCounter > 0)
+		if (Time.timeScale == 1f)
 		{
-			HandleKnockback();
-			return;
-		}
+			if (!IsActive || knockbackCounter > 0)
+			{
+				HandleKnockback();
+				return;
+			}
 
-		CheckGrounded();
-		Move();
-		HandleJumping();
-		HandleFlippingSide();
-		HandleAnimations();
+			CheckGrounded();
+			Move();
+			HandleJumping();
+			HandleFlippingSide();
+			HandleAnimations();
+		}
 	}
+		
 
 	/// <summary>
 	/// Moves the player character based on user input and active speed.
@@ -164,6 +166,9 @@ public class PlayerController : MonoBehaviour
 		// Inform the Animator component about the jump.
 		anim.SetBool("isDoubleJumping", doubleJump);
 		// anim.SetTrigger("doDoubleJump")
+
+		// Play SFX
+		AudioManager.Instance.PlaySFX(14, true);
 	}
 
 	/// <summary>

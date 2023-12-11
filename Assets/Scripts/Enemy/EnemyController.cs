@@ -74,6 +74,8 @@ public class EnemyController : MonoBehaviour
 		if (waitToDestroy <= 0f)
 		{
 			Destroy(gameObject);
+
+			AudioManager.Instance.PlaySFX(5, false);
 		}
 	}
 
@@ -86,5 +88,6 @@ public class EnemyController : MonoBehaviour
 		playerCollider.GetComponent<PlayerController>().Jump(false);
 		anim.SetTrigger("Defeated");
 		isDefeated = true;
+		AudioManager.Instance.PlaySFX(6, false);
 	}
 }

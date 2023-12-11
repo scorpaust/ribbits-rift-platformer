@@ -6,7 +6,6 @@ using UnityEngine;
 /// </summary>
 public class PlayerHealthController : MonoBehaviour
 {
-	// Singleton Instance
 	public static PlayerHealthController Instance { get; private set; }
 
 	[Header("Health Configuration")]
@@ -33,21 +32,33 @@ public class PlayerHealthController : MonoBehaviour
 
 	public int MaxHealth => maxHealth;
 
+	/// <summary>
+	/// Initializes the singleton instance and component references.
+	/// </summary>
 	private void Awake()
 	{
 		ManageSingletonInstance();
 	}
 
+	/// <summary>
+	/// Sets initial health and updates the health display on the UI.
+	/// </summary>
 	private void Start()
 	{
 		InitializeHealth();
 	}
 
+	/// <summary>
+	/// Updates the invincibility counter on each frame.
+	/// </summary>
 	private void Update()
 	{
 		CheckInvincibility();
 	}
 
+	/// <summary>
+	/// Damages the player if they are not currently invincible.
+	/// </summary>
 	public void DamagePlayer()
 	{
 		if (invincibilityCounter <= 0)
@@ -56,6 +67,9 @@ public class PlayerHealthController : MonoBehaviour
 		}
 	}
 
+	/// <summary>
+	/// Manages the singleton instance and initializes components.
+	/// </summary>
 	private void ManageSingletonInstance()
 	{
 		if (Instance != null && Instance != this)
@@ -70,12 +84,18 @@ public class PlayerHealthController : MonoBehaviour
 		}
 	}
 
+	/// <summary>
+	/// Sets the player's current health to maximum and updates the UI.
+	/// </summary>
 	private void InitializeHealth()
 	{
 		CurrentHealth = maxHealth;
-		UIController.Instance.UpdateHealthDisplay(CurrentHealth, MaxHealth);
+		UpdateHealthUI();
 	}
 
+	/// <summary>
+	/// Checks and updates the invincibility counter.
+	/// </summary>
 	private void CheckInvincibility()
 	{
 		if (invincibilityCounter > 0)
@@ -84,6 +104,9 @@ public class PlayerHealthController : MonoBehaviour
 		}
 	}
 
+	/// <summary>
+	/// Processes the player taking damage, including updating health, handling knockback, and death.
+	/// </summary>
 	private void ProcessPlayerDamage()
 	{
 		invincibilityCounter = invincibilityLength;
@@ -95,31 +118,50 @@ public class PlayerHealthController : MonoBehaviour
 		{
 			StartCoroutine(HandleDeath());
 		}
+		else
+		{
+			AudioManager.Instance.PlaySFX(13, false);
+		}
 	}
 
+	/// <summary>
+	/// Handles the player's death process including disabling control, applying a jump force, and respawning.
+	/// </summary>
 	private IEnumerator HandleDeath()
 	{
-		DisablePlayerControlAndCollider();
+		PlayerControlAndCollider(false);
 		rb.velocity = new Vector2(rb.velocity.x, deathJumpForce);
 
 		yield return new WaitForSeconds(0.5f);
 
 		LifeController.instance.Respawn();
 		InitializeHealth();
+		PlayerControlAndCollider(true);
 	}
 
-	private void DisablePlayerControlAndCollider()
+	/// <summary>
+	/// Enables or disables player control and collider.
+	/// </summary>
+	/// <param name="enabled">Whether to enable or disable control and collider.</param>
+	private void PlayerControlAndCollider(bool enabled)
 	{
-		thePlayer.IsActive = false;
+		thePlayer.IsActive = enabled;
 		CapsuleCollider2D collider = thePlayer.GetComponent<CapsuleCollider2D>();
-		if (collider != null) collider.enabled = false;
+		collider.enabled = enabled;
 	}
 
+	/// <summary>
+	/// Updates the health display on the UI.
+	/// </summary>
 	private void UpdateHealthUI()
 	{
 		UIController.Instance.UpdateHealthDisplay(CurrentHealth, MaxHealth);
 	}
 
+	/// <summary>
+	/// Adds a specified amount of health to the player and updates the UI.
+	/// </summary>
+	/// <param name="amountToAdd">The amount of health to add.</param>
 	public void AddHealth(int amountToAdd)
 	{
 		CurrentHealth += amountToAdd;
