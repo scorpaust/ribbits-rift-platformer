@@ -32,6 +32,12 @@ public class UIController : MonoBehaviour
 	[Tooltip("Text display for the number of collectables.")]
 	[SerializeField] private TMP_Text collectablesText;
 
+	[SerializeField] private Image fadeScreen;
+	[SerializeField] private float fadeSpeed;
+	[SerializeField] private bool fadingToBlack;
+	[SerializeField] private bool fadingFromBlack;
+
+
 	/// <summary>
 	/// Initializes the singleton instance of the UIController.
 	/// </summary>
@@ -47,9 +53,28 @@ public class UIController : MonoBehaviour
 		}
 	}
 
+	private void Start()
+	{
+		FadeFromBlack();
+	}
+
 	private void Update()
 	{
 		PauseUnpause();
+
+		if (fadingFromBlack)
+		{
+			fadeScreen.color = new Color(
+					fadeScreen.color.r, fadeScreen.color.g, fadeScreen.color.b, Mathf.MoveTowards(fadeScreen.color.a, 0f, fadeSpeed * Time.deltaTime)
+				);
+		}
+
+		if (fadingToBlack)
+		{
+			fadeScreen.color = new Color(
+					fadeScreen.color.r, fadeScreen.color.g, fadeScreen.color.b, Mathf.MoveTowards(fadeScreen.color.a, 1f, fadeSpeed * Time.deltaTime)
+				);
+		}
 	}
 
 	/// <summary>
@@ -118,6 +143,13 @@ public class UIController : MonoBehaviour
 		}
 	}
 
+	public void ResumeGame()
+	{
+		pauseScreen.SetActive(false);
+		
+		Time.timeScale = 1f;
+	}
+
 	/// <summary>
 	/// Returns player to the Main Menu screen.
 	/// </summary>
@@ -139,6 +171,20 @@ public class UIController : MonoBehaviour
 						// Quit the game if running in a production build
 						Application.Quit();
 		#endif
+	}
+
+	public void FadeFromBlack()
+	{
+		fadingToBlack = false;
+
+		fadingFromBlack = true;
+	}
+
+	public void FadeToBlack()
+	{
+		fadingToBlack = true;
+
+		fadingFromBlack = false;
 	}
 }
 
